@@ -52,6 +52,8 @@ class ConnTrack:
         self.TTL = START_TTL
         self.src = src
         self.dst = dst
+        self.loc_src = None
+        self.loc_dst = None
 
     def reset_ttl(self):
         self.TTL = START_TTL
@@ -125,22 +127,31 @@ def http_server_start():
                 return
 
             if self.path == "/jquery":
-                self.send_response(200)
-                self.send_header('Content-type', 'application/javascript')
-                self.end_headers()
-                with open("jquery-3.2.1.min.js", 'r') as jquery:
-                    for line in jquery:
-                        self.wfile.write(line)
-                return
-            if self.path == "/":
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-                with open("index.html", 'r') as jquery:
-                    for line in jquery:
-                        self.wfile.write(line)
+                self.send_file("jquery-3.2.1.min.js", 'application/javascript')
                 return
 
+            if self.path == "/":
+                self.send_file("index.html",'text/html')
+                return
+
+            if self.path == "/world":
+                self.send_file("bitsch/flight-animation.html", 'text/html')
+                return
+
+            ##fallback
+            try:
+                self.send_file("bitsch" + self.path, "application/javascript")
+            except Exception:
+                pass
+
+        def send_file(self, file, content_type):
+            self.send_response(200)
+            self.send_header('Content-type', content_type)
+            self.end_headers()
+            with open(file, 'r') as jquery:
+                for line in jquery:
+                    self.wfile.write(line)
+            return
 
     try:
         # Create a web server and define the handler to manage the
@@ -154,6 +165,9 @@ def http_server_start():
     except KeyboardInterrupt:
         print '^C received, shutting down the web server'
         server.socket.close()
+
+
+
 
 def run(args):
 
