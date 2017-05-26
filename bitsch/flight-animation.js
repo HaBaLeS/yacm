@@ -66,6 +66,12 @@ var addLater = function(feature, timeout) {
   }, timeout);
 };
 
+var deleteLater = function(feature) {
+  window.setTimeout(function() {
+     flightsSource.removeFeature(feature);
+  }, 50);
+};
+
 var pointsPerMs = 0.1;
 var animateFlights = function(event) {
   var vectorContext = event.vectorContext;
@@ -91,6 +97,7 @@ var animateFlights = function(event) {
       // directly draw the line with the vector context
       vectorContext.drawGeometry(currentLine);
     } else {
+        deleteLater(feature);
 	    //flightsSource.removeFeature(feature);
     }
   }
