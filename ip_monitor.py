@@ -122,7 +122,8 @@ def http_server_start():
                 resp = "["
                 listlock.acquire()
                 for con in list(CONN_TRACK):  # iterate over copy of list to avoid concurrent modification
-                    resp = resp + str(con.to_web()) + "\n"
+                    resp = resp + str(con.to_web()) + ","
+                resp =resp[:-1]
                 listlock.release()
                 resp = resp + "]"
                 self.wfile.write(resp)
