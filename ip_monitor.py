@@ -71,7 +71,7 @@ class ConnTrack:
         return (self.src == other.src or self.src == other.dst) and (self.dst == other.dst or self.dst == other.src)
 
     def to_web(self):
-        if self.loc_src.location and self.loc_dst.location:
+        if self.loc_src and self.loc_dst and self.loc_src.location and self.loc_dst.location:
             srcl = self.loc_src.location
             dstl = self.loc_dst.location
             return '{"src_lat":%s,"src_long":%s, "dst_lat":%s,"dst_long":%s}'%(srcl[0],srcl[1],dstl[0],dstl[1])
