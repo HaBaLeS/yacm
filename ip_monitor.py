@@ -169,6 +169,32 @@ def http_server_start():
         server.socket.close()
 
 
+def run_tcpdump_subprocess():
+    import subprocess
+    proc = subprocess.Popen(['-i wlp3s0', '-nn', '-t', '-l', 'tcp and not ip6'], 1, 'tcpdump', stdout=subprocess.PIPE,
+                            stdin=subprocess.PIPE,
+                            universal_newlines=True)
+    while True:
+        line = proc.stdout.readline()
+        if line != '':
+            # the real code does filtering here
+            data = str(line).split(' ')
+            src = data[1]
+            dst = data[3][:-1]  # remove last ':'
+
+            dst_ip = ''
+            for block in dst.split('.')[:-1]:
+                dst_ip = dst_ip + '.' + block
+            dst_ip = dst_ip[1:]
+
+            src_ip = ''
+            for block in src.split('.')[:-1]:
+                src_ip = src_ip + '.' + block
+            src_ip = src_ip[1:]
+
+            #print("%s -> %s" % (src_ip, dst_ip))
+            addTrack(src_ip, dst_ip)
+        
 
 
 def run(args):
@@ -185,8 +211,11 @@ def run(args):
         http_runner.setDaemon(True)
         http_runner.start()
 
-    print("start PCAP")
-    sniff(iface=args.i, prn=pkt_callback, store=0)
+    if args.scapy:
+        print("start PCAP")
+        sniff(iface=args.i, prn=pkt_callback, store=0)
+    else:
+        run_tcpdump_subprocess()
 
     running = False
 
@@ -194,6 +223,7 @@ def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Network monitor. Print connections and geoip locations for src and dst ')
     parser.add_argument('-i', help='Device to monitor', required=True)
+    parser.add_argument('--scapy', help='use scapy instead of tcpdum in subprocess', action='store_true')
     #parser.add_argument('-v', help='Verbose print Data to Console', action='store_true')
     parser.add_argument("-s", help='start webserver', action='store_true')
     args = parser.parse_args()
