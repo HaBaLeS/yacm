@@ -159,7 +159,7 @@ def http_server_start():
     try:
         # Create a web server and define the handler to manage the
         # incoming request
-        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        server = HTTPServer(('localhost', PORT_NUMBER), myHandler)
         print 'Started httpserver on port ', PORT_NUMBER
 
         # Wait forever for incoming htto requests
