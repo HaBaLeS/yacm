@@ -41,9 +41,11 @@ def addTrack(src, dst):
         listlock.release()
         ct.location_lookup()
     else:
+        listlock.acquire()
         for c in CONN_TRACK:
             if ct == c:
                 c.reset_ttl()
+        listlock.release()
 
 
 class ConnTrack:
