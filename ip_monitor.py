@@ -57,7 +57,16 @@ class ConnTrack:
         return (self.src == other.src or self.src == other.dst) and (self.dst == other.dst or self.dst == other.src)
 
     def __repr__(self):
-        return ("%s <-> %s TTL: %s %s <-> (%s" % (self.src, self.dst, self.TTL,self.loc_src.location,self.loc_dst.location))
+
+        srcl = "???"
+        dstl = "???"
+        if self.loc_src:
+            srcl = self.loc_src.location
+
+        if self.loc_dst:
+            dstl = self.loc_dst.location
+
+        return ("%s <-> %s TTL: %s %s <-> (%s" % (self.src, self.dst, self.TTL,srcl,dstl))
 
     def is_alive(self):
         self.TTL = self.TTL-1
