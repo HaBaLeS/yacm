@@ -4,10 +4,12 @@ from time import sleep
 from geoip import geolite2
 import argparse
 
+
 START_TTL = 5
 CONN_TRACK = set()
 listlock = Lock()
 running = True
+PORT_NUMBER = 8080
 
 import os
 
@@ -59,11 +61,18 @@ class ConnTrack:
         self.loc_dst = geolite2.lookup(self.dst)
 
     def __hash__(self):
-        #return ("%s %s" % (self.src, self.dst)).__hash__()
+        #XOR src/dst so the can be ordered in any direction
         return "".join(chr(ord(a) ^ ord(b)) for a, b in zip(str(self.src), str(self.dst))).__hash__()
 
     def __eq__(self, other):
         return (self.src == other.src or self.src == other.dst) and (self.dst == other.dst or self.dst == other.src)
+
+    def to_web(self):
+        if self.loc_src and self.loc_dst:
+            srcl = self.loc_src.location
+            dstl = self.loc_dst.location
+            return '{"src_lat":%s,"src_long":%s, "dst_lat":%s,"dst_long":%s}'%(srcl[0],srcl[1],dstl[0],dstl[1])
+        return None
 
     def __repr__(self):
 
@@ -84,7 +93,7 @@ class ConnTrack:
 def update_conntrack():
     #sort list
     while running:
-        clear()
+        #clear()
         listlock.acquire()
         for con in list(CONN_TRACK): #iterate over copy of list to avoid concurrent modification
             if con.is_alive():
@@ -94,15 +103,72 @@ def update_conntrack():
         listlock.release()
         sleep(1)
 
+def http_server_start():
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-def run(device):
+    class myHandler(BaseHTTPRequestHandler):
+        # Handler for the GET requests
+        def do_GET(self,):
+
+
+            if self.path == "/data":
+                self.send_response(200)
+                self.send_header('Content-type', 'application/javascript')
+                self.end_headers()
+                resp = "["
+                listlock.acquire()
+                for con in list(CONN_TRACK):  # iterate over copy of list to avoid concurrent modification
+                    resp = resp + str(con.to_web()) + "\n"
+                listlock.release()
+                resp = resp + "]"
+                self.wfile.write(resp)
+                return
+
+            if self.path == "/jquery":
+                self.send_response(200)
+                self.send_header('Content-type', 'application/javascript')
+                self.end_headers()
+                with open("jquery-3.2.1.min.js", 'r') as jquery:
+                    for line in jquery:
+                        self.wfile.write(line)
+                return
+            if self.path == "/":
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                with open("index.html", 'r') as jquery:
+                    for line in jquery:
+                        self.wfile.write(line)
+                return
+
+
+    try:
+        # Create a web server and define the handler to manage the
+        # incoming request
+        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        print 'Started httpserver on port ', PORT_NUMBER
+
+        # Wait forever for incoming htto requests
+        server.serve_forever()
+
+    except KeyboardInterrupt:
+        print '^C received, shutting down the web server'
+        server.socket.close()
+
+def run(args):
 
     update_runner = Thread(target = update_conntrack)
     update_runner.setDaemon(True)
     update_runner.start()
 
+    if args.s:
+        print("Start Webserver")
+        http_runner = Thread(target = http_server_start)
+        http_runner.setDaemon(True)
+        http_runner.start()
+
     print("start PCAP")
-    sniff(iface=device, prn=pkt_callback, store=0)
+    sniff(iface=args.i, prn=pkt_callback, store=0)
 
     running = False
 
@@ -110,5 +176,6 @@ def run(device):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Network monitor. Print connections and geoip locations for src and dst ')
     parser.add_argument('-i', help='Device to monitor', required=True)
+    parser.add_argument("-s", help='start webserver', action='store_true')
     args = parser.parse_args()
-    run(args.i)
+    run(args)
