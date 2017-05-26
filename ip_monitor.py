@@ -2,6 +2,7 @@ from scapy.all import *
 from threading import Thread, Lock
 from time import sleep
 from geoip import geolite2
+import argparse
 
 START_TTL = 5
 CONN_TRACK = set()
@@ -37,6 +38,11 @@ def addTrack(src, dst):
         CONN_TRACK.add(ct)
         listlock.release()
         ct.location_lookup()
+    else:
+        for c in CONN_TRACK:
+            if ct == c:
+                c.reset_ttl()
+
 
 class ConnTrack:
 
@@ -44,6 +50,9 @@ class ConnTrack:
         self.TTL = START_TTL
         self.src = src
         self.dst = dst
+
+    def reset_ttl(self):
+        self.TTL = START_TTL
 
     def location_lookup(self):
         self.loc_src = geolite2.lookup(self.src)
@@ -58,15 +67,15 @@ class ConnTrack:
 
     def __repr__(self):
 
-        srcl = "???"
-        dstl = "???"
+        srcl = "(???)"
+        dstl = "(???)"
         if self.loc_src:
             srcl = self.loc_src.location
 
         if self.loc_dst:
             dstl = self.loc_dst.location
 
-        return ("%s <-> %s TTL: %s %s <-> (%s" % (self.src, self.dst, self.TTL,srcl,dstl))
+        return ("%s <-> %s TTL: %s %s <-> %s" % (self.src, self.dst, self.TTL,srcl,dstl))
 
     def is_alive(self):
         self.TTL = self.TTL-1
@@ -86,17 +95,20 @@ def update_conntrack():
         sleep(1)
 
 
-def run():
+def run(device):
 
     update_runner = Thread(target = update_conntrack)
     update_runner.setDaemon(True)
     update_runner.start()
 
     print("start PCAP")
-    sniff(iface="enxa0cec80161af", prn=pkt_callback, store=0)
+    sniff(iface=device, prn=pkt_callback, store=0)
 
     running = False
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(description='Network monitor. Print connections and geoip locations for src and dst ')
+    parser.add_argument('-i', help='Device to monitor', required=True)
+    args = parser.parse_args()
+    run(args.i)
