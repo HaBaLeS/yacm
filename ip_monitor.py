@@ -19,9 +19,8 @@ def pkt_callback(pkt):
 
   if IP in pkt:
       ip = pkt[IP]
-
-      if UDP in pkt and pkt[UDP].dport == 5353:
-          mdns = pkt[UDP]
+      #if UDP in pkt and pkt[UDP].dport == 5353:
+      #    mdns = pkt[UDP]
           
 
       if TCP in pkt:
@@ -174,9 +173,11 @@ def http_server_start():
 
 def run(args):
 
-    update_runner = Thread(target = update_conntrack)
-    update_runner.setDaemon(True)
-    update_runner.start()
+    if args.v:
+        print("Start Logger")
+        update_runner = Thread(target = update_conntrack)
+        update_runner.setDaemon(True)
+        update_runner.start()
 
     if args.s:
         print("Start Webserver")
@@ -193,6 +194,7 @@ def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Network monitor. Print connections and geoip locations for src and dst ')
     parser.add_argument('-i', help='Device to monitor', required=True)
+    parser.add_argument('-v', help='Verbose print Data to Console', action='store_true')
     parser.add_argument("-s", help='start webserver', action='store_true')
     args = parser.parse_args()
     run(args)
