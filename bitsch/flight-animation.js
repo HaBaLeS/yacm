@@ -98,10 +98,71 @@ var animateFlights = function(event) {
   map.render();
 };
 
+
+
+setInterval(update_layer, 1000);
+
+function update_layer(){
+      flightsSource = new ol.source.Vector({
+      wrapX: false,
+      attributions: '#gpn2017',
+      loader: function() {
+        var url = '/data';
+        fetch(url).then(function(response) {
+          return response.json();
+        }).then(function(json) {
+
+          for (var i = 0; i < json.length; i++) {
+            var src_lat = json[i]['src_lat']
+            var src_long = json[i]['src_long']
+            var dst_lat = json[i]['dst_lat']
+            var dst_long = json[i]['dst_long']
+            // create an arc circle between the two locations
+            var arcGenerator = new arc.GreatCircle(
+                {y: src_lat, x: src_long},
+                {y: dst_lat, x: dst_long});
+
+            var arcLine = arcGenerator.Arc(100, {offset: 10});
+            if (arcLine.geometries.length === 1) {
+              var line = new ol.geom.LineString(arcLine.geometries[0].coords);
+              line.transform(ol.proj.get('EPSG:4326'), ol.proj.get('EPSG:3857'));
+
+              var feature = new ol.Feature({
+                geometry: line,
+                finished: false
+              });
+              // add the feature with a delay so that the animation
+              // for all features does not start at the same time
+
+              feature.set('start', new Date().getTime());
+              flightsSource.addFeature(feature);
+            }
+          }
+          map.on('postcompose', animateFlights);
+        });
+      }
+    });
+    var flightsLayer = new ol.layer.Vector({
+      source: flightsSource,
+      style: function(feature) {
+        // if the animation is still active for a feature, do not
+        // render the feature with the layer style
+        if (feature.get('finished')) {
+          return style;
+          // return null;
+        } else {
+          return null;
+        }
+      }
+    });
+
+    map.addLayer(flightsLayer);
+}
+
+/*
 flightsSource = new ol.source.Vector({
   wrapX: false,
-  attributions: 'Flight data by ' +
-        '<a href="http://openflights.org/data.html">OpenFlights</a>,',
+  attributions: 'Flight data by <a href="http://openflights.org/data.html">OpenFlights</a>,',
   loader: function() {
     var url = 'data/openflights/flights.json';
     fetch(url).then(function(response) {
@@ -136,19 +197,6 @@ flightsSource = new ol.source.Vector({
       map.on('postcompose', animateFlights);
     });
   }
-});
+});*/
 
-var flightsLayer = new ol.layer.Vector({
-  source: flightsSource,
-  style: function(feature) {
-    // if the animation is still active for a feature, do not
-    // render the feature with the layer style
-    if (feature.get('finished')) {
-      return style;
-      // return null;
-    } else {
-      return null;
-    }
-  }
-});
-map.addLayer(flightsLayer);
+
