@@ -120,7 +120,7 @@ def http_server_start():
                 self.end_headers()
                 resp = "["
                 listlock.acquire()
-                for con in list(CONN_TRACK):  # iterate over copy of list to avoid concurrent modification
+                for con in list(CONN_TRACK)[:]:  # iterate over copy of list to avoid concurrent modification
                     resp = resp + str(con.to_web()) + ","
                 resp =resp[:-1]
                 listlock.release()
