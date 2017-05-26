@@ -91,7 +91,7 @@ var animateFlights = function(event) {
       // directly draw the line with the vector context
       vectorContext.drawGeometry(currentLine);
     } else {
-	flightsSource.removeFeature(feature);
+	    //flightsSource.removeFeature(feature);
     }
   }
   // tell OpenLayers to continue the animation
@@ -159,7 +159,7 @@ function update_layer(){
           return style;
           // return null;
         } else {
-          return null;
+          return style;
         }
       }
     });
