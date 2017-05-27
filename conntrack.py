@@ -3,10 +3,11 @@ START_TTL = 5
 
 class ConnTrack:
 
-    def __init__(self, src, dst):
+    def __init__(self, src, dst, db):
         self.TTL = START_TTL
         self.src = src
         self.dst = dst
+        self.db = db
         self.loc_src = None
         self.loc_dst = None
 
@@ -14,8 +15,8 @@ class ConnTrack:
         self.TTL = START_TTL
 
     def location_lookup(self):
-        self.loc_src = geolite2.lookup(self.src)
-        self.loc_dst = geolite2.lookup(self.dst)
+        self.loc_src = self.db.lookup(self.src)
+        self.loc_dst = self.db.lookup(self.dst)
 
     def __hash__(self):
         #XOR src/dst so the can be ordered in any direction

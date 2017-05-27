@@ -1,19 +1,21 @@
 from threading import Thread, Lock
 from time import sleep
 from conntrack import ConnTrack
-import argparse
+from geoip import open_database
 
+import argparse
 import hax0r_log as hxl
 
 
 CONN_TRACK = set()
 listlock = Lock()
+db = open_database('lookup.mmdb')
 running = True
 PORT_NUMBER = 8080
 
 
 def addTrack(src, dst):
-    ct = ConnTrack(src, dst)
+    ct = ConnTrack(src, dst, db)
     if ct not in CONN_TRACK:
         listlock.acquire()
         CONN_TRACK.add(ct)
