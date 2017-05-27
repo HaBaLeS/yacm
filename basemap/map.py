@@ -15,7 +15,7 @@ import matplotlib.animation as animation
 import matplotlib.lines as lines
 from mpl_toolkits.basemap import Basemap
 
-my_map = Basemap(projection='robin', resolution = 'c', area_thresh = 1000.0, lat_0=0, lon_0=0)
+my_map = Basemap(projection='merc', llcrnrlat=-55,urcrnrlat=75, llcrnrlon=-170, urcrnrlon=180, lat_ts=20, resolution = 'c', area_thresh = 1000.0, lat_0=0, lon_0=0)
 my_map.drawmapboundary(fill_color = 'black')
 my_map.drawcoastlines(color='lightblue')
 my_map.drawcountries(color='lightblue')
