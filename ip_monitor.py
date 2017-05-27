@@ -46,6 +46,11 @@ def http_server_start():
 
     class myHandler(BaseHTTPRequestHandler):
         # Handler for the GET requests
+
+        def log_message(self, format, *args):
+            hxl.debug("dropped log from BaseHTTPRequestHandler")
+
+
         def do_GET(self,):
 
 
@@ -102,7 +107,7 @@ def http_server_start():
         server.serve_forever()
 
     except KeyboardInterrupt:
-        print '^C received, shutting down the web server'
+        hxl.error('^C received, shutting down the web server')
         server.socket.close()
 
 

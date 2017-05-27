@@ -48,4 +48,19 @@ class ConnTrack:
         return self.TTL>0
 
     def console_info(self):
-        return self.__repr__()
+        s_loc = "(???)"
+        d_loc = "(???)"
+
+        s_code = "n.a."
+        d_code = "n.a."
+
+        if self.loc_src:
+            s_loc = self.loc_src.location
+            s_code = self.loc_src.country
+
+        if self.loc_dst:
+            d_loc = self.loc_dst.location
+            d_code = self.loc_dst.country
+
+        return ("%s %s <-> %s %s" % (self.src, s_code, self.dst, d_code))
+
