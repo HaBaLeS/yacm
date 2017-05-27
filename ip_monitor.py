@@ -1,4 +1,3 @@
-from scapy.all import *
 from threading import Thread, Lock
 from time import sleep
 from conntrack import ConnTrack
@@ -12,13 +11,6 @@ listlock = Lock()
 running = True
 PORT_NUMBER = 8080
 
-
-
-def pkt_callback(pkt):
-  if IP in pkt:
-      ip = pkt[IP]
-      if TCP in pkt:
-          addTrack(ip.src, ip.dst)
 
 def addTrack(src, dst):
     ct = ConnTrack(src, dst)
@@ -159,12 +151,9 @@ def run(args):
         http_runner.setDaemon(True)
         http_runner.start()
 
-    if args.scapy:
-        hxl.success("Start PCAP")
-        sniff(iface=args.i, prn=pkt_callback, store=0)
-    else:
-        hxl.success("starting tcpdump subprocess")
-        run_tcpdump_subprocess(args.i)
+
+    hxl.success("starting tcpdump subprocess")
+    run_tcpdump_subprocess(args.i)
 
     running = False
 
@@ -176,7 +165,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='YACM - Yet Another Cyber Map')
     parser.add_argument('-i', help='Device to monitor', required=True)
-    parser.add_argument('--scapy', help='use scapy instead of tcpdum in subprocess', action='store_true')
     parser.add_argument("-s", help='start webserver', action='store_true')
     parser.add_argument("-v", help='enable debug logging', action='store_true')
     parser.add_argument("-q", help='quiet, suppress info messages', action='store_true', default=False)
