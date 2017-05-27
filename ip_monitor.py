@@ -64,7 +64,8 @@ def http_server_start():
                     bla = con.to_web()
                     if bla:
                         resp = resp + str(bla) + ","
-                resp =resp[:-1]
+                if resp != "[":
+                    resp =resp[:-1]
                 listlock.release()
                 resp = resp + "]"
                 self.wfile.write(resp)
