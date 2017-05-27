@@ -1,36 +1,24 @@
 from scapy.all import *
 from threading import Thread, Lock
 from time import sleep
-from geoip import geolite2
+from conntrack import ConnTrack
 import argparse
 
+import hax0r_log as hxl
 
-START_TTL = 5
+
 CONN_TRACK = set()
 listlock = Lock()
 running = True
 PORT_NUMBER = 8080
 
-import os
 
-clear = lambda : os.system('tput reset')
 
 def pkt_callback(pkt):
-
   if IP in pkt:
       ip = pkt[IP]
-      #if UDP in pkt and pkt[UDP].dport == 5353:
-      #    mdns = pkt[UDP]
-          
-
       if TCP in pkt:
           addTrack(ip.src, ip.dst)
-          #print(mdns.load)
-
-          #name = str(load[12:])
-
-          #print (pkt[UDP].underlayer.summary())
-          #print (pkt[UDP].payload_guess)
 
 def addTrack(src, dst):
     ct = ConnTrack(src, dst)
@@ -47,51 +35,6 @@ def addTrack(src, dst):
         listlock.release()
 
 
-class ConnTrack:
-
-    def __init__(self, src, dst):
-        self.TTL = START_TTL
-        self.src = src
-        self.dst = dst
-        self.loc_src = None
-        self.loc_dst = None
-
-    def reset_ttl(self):
-        self.TTL = START_TTL
-
-    def location_lookup(self):
-        self.loc_src = geolite2.lookup(self.src)
-        self.loc_dst = geolite2.lookup(self.dst)
-
-    def __hash__(self):
-        #XOR src/dst so the can be ordered in any direction
-        return "".join(chr(ord(a) ^ ord(b)) for a, b in zip(str(self.src), str(self.dst))).__hash__()
-
-    def __eq__(self, other):
-        return (self.src == other.src or self.src == other.dst) and (self.dst == other.dst or self.dst == other.src)
-
-    def to_web(self):
-        if self.loc_src and self.loc_dst and self.loc_src.location and self.loc_dst.location:
-            srcl = self.loc_src.location
-            dstl = self.loc_dst.location
-            return '{"src_lat":%s,"src_long":%s, "dst_lat":%s,"dst_long":%s}'%(srcl[0],srcl[1],dstl[0],dstl[1])
-        return None
-
-    def __repr__(self):
-
-        srcl = "(???)"
-        dstl = "(???)"
-        if self.loc_src:
-            srcl = self.loc_src.location
-
-        if self.loc_dst:
-            dstl = self.loc_dst.location
-
-        return ("%s <-> %s TTL: %s %s <-> %s" % (self.src, self.dst, self.TTL,srcl,dstl))
-
-    def is_alive(self):
-        self.TTL = self.TTL-1
-        return self.TTL>0
 
 def update_conntrack():
     #sort list
@@ -100,7 +43,7 @@ def update_conntrack():
         listlock.acquire()
         for con in list(CONN_TRACK): #iterate over copy of list to avoid concurrent modification
             if con.is_alive():
-                print(con)
+                hxl.info(con.console_info())
             else:
                 CONN_TRACK.remove(con)
         listlock.release()
@@ -161,7 +104,7 @@ def http_server_start():
         # Create a web server and define the handler to manage the
         # incoming request
         server = HTTPServer(('localhost', PORT_NUMBER), myHandler)
-        print 'Started httpserver on port ', PORT_NUMBER
+        hxl.success('Started httpserver on port %s' % PORT_NUMBER)
 
         # Wait forever for incoming htto requests
         server.serve_forever()
@@ -171,13 +114,15 @@ def http_server_start():
         server.socket.close()
 
 
-def run_tcpdump_subprocess():
+def run_tcpdump_subprocess(device):
     import subprocess
-    proc = subprocess.Popen(['-i wlp3s0', '-nn', '-t', '-l', 'tcp and not ip6'], 1, 'tcpdump', stdout=subprocess.PIPE,
+    proc = subprocess.Popen(['-i ' + device, '-nn', '-t', '-l', 'tcp and not ip6'], 1, 'tcpdump', stdout=subprocess.PIPE,
                             stdin=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
                             universal_newlines=True)
     while True:
         line = proc.stdout.readline()
+        hxl.debug(line)
         if line != '':
             # the real code does filtering here
             data = str(line).split(' ')
@@ -194,39 +139,46 @@ def run_tcpdump_subprocess():
                 src_ip = src_ip + '.' + block
             src_ip = src_ip[1:]
 
-            #print("%s -> %s" % (src_ip, dst_ip))
             addTrack(src_ip, dst_ip)
 
 
 
 def run(args):
 
-    #if args.v:
-    print("Start Logger")
+    hxl.debug_enabled = args.v
+    hxl.info_enabled =  not args.q
+
+    hxl.success("starting Connection tracking Thread")
     update_runner = Thread(target = update_conntrack)
     update_runner.setDaemon(True)
     update_runner.start()
 
     if args.s:
-        print("Start Webserver")
+        hxl.success("starting simple python Webserver")
         http_runner = Thread(target = http_server_start)
         http_runner.setDaemon(True)
         http_runner.start()
 
     if args.scapy:
-        print("start PCAP")
+        hxl.success("Start PCAP")
         sniff(iface=args.i, prn=pkt_callback, store=0)
     else:
-        run_tcpdump_subprocess()
+        hxl.success("starting tcpdump subprocess")
+        run_tcpdump_subprocess(args.i)
 
     running = False
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Network monitor. Print connections and geoip locations for src and dst ')
+    hxl.newline()
+    hxl.success("Welcome to YACM - Yet Another Cyber Map")
+    hxl.newline()
+
+    parser = argparse.ArgumentParser(description='YACM - Yet Another Cyber Map')
     parser.add_argument('-i', help='Device to monitor', required=True)
     parser.add_argument('--scapy', help='use scapy instead of tcpdum in subprocess', action='store_true')
-    #parser.add_argument('-v', help='Verbose print Data to Console', action='store_true')
     parser.add_argument("-s", help='start webserver', action='store_true')
+    parser.add_argument("-v", help='enable debug logging', action='store_true')
+    parser.add_argument("-q", help='quiet, suppress info messages', action='store_true', default=False)
     args = parser.parse_args()
     run(args)
