@@ -1,21 +1,27 @@
 import random
 import matplotlib
+#matplotlib.use('WXAgg') # use -dWXAgg
 import matplotlib.pyplot as plt
 import json, requests
 
-matplotlib.use('Agg')
-fig = plt.figure(figsize = (16,10))
+fig = plt.figure(figsize = (15,9))
 fig.patch.set_facecolor('black')
 fig.patch.set_alpha(1.0)
 ax = fig.add_subplot(111)
 plt.subplots_adjust(left=0.00, right=1.00, top=1.00, bottom=0.00)
+
+try:
+    mng = plt.get_current_fig_manager()
+    mng.frame.Maximize(True)
+except:
+    pass
 
 import numpy as np
 import matplotlib.animation as animation
 import matplotlib.lines as lines
 from mpl_toolkits.basemap import Basemap
 
-my_map = Basemap(projection='merc', llcrnrlat=-55,urcrnrlat=75, llcrnrlon=-170, urcrnrlon=180, lat_ts=20, resolution = 'c', area_thresh = 1000.0, lat_0=0, lon_0=0)
+my_map = Basemap(projection='merc', llcrnrlat=-55,urcrnrlat=72, llcrnrlon=-170, urcrnrlon=180, lat_ts=20, resolution = 'c', area_thresh = 1000.0, lat_0=0, lon_0=0)
 my_map.drawmapboundary(fill_color = 'black')
 my_map.drawcoastlines(color='lightblue')
 my_map.drawcountries(color='lightblue')
