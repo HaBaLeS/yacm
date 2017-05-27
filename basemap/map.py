@@ -10,6 +10,7 @@ fig.patch.set_alpha(1.0)
 ax = fig.add_subplot(111)
 plt.subplots_adjust(left=0.00, right=1.00, top=1.00, bottom=0.00)
 
+
 try:
     mng = plt.get_current_fig_manager()
     mng.frame.Maximize(True)
@@ -46,6 +47,13 @@ def animate(i):
     return ret
 
 anim = animation.FuncAnimation(fig, animate, frames=1, interval=500, blit=True)
+
+
+labelx, labely = my_map(160, -49)
+plt.text(labelx, labely,'YACM - Yet Another Cyber Map',fontsize=14,fontweight='bold', ha='right',va='center',color='lightblue')
+labelx, labely = my_map(160, -52)
+plt.text(labelx, labely,'https://github.com/habales/yacm',fontsize=12, ha='right',va='center',color='lightblue')
+
 plt.show()
 
 
