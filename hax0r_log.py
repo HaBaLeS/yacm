@@ -23,7 +23,7 @@ def info(msg):
 
 
 def newline():
-    print ""
+    print("")
 
 
 def reset_screen():

@@ -2,6 +2,7 @@ from threading import Thread, Lock
 from time import sleep
 from conntrack import ConnTrack
 from geoip import open_database
+from IPy import IP
 
 import argparse
 import hax0r_log as hxl
@@ -12,9 +13,17 @@ listlock = Lock()
 db = open_database('lookup.mmdb')
 running = True
 PORT_NUMBER = 8080
+ext_ip_override = None
 
 
 def addTrack(src, dst):
+
+    if ext_ip_override:
+        if IP(src).iptype() == 'PRIVATE':
+            src = ext_ip_override
+        if IP(dst).iptype() == 'PRIVATE':
+            dst = ext_ip_override
+
     ct = ConnTrack(src, dst, db)
     if ct not in CONN_TRACK:
         listlock.acquire()
@@ -146,7 +155,13 @@ def run_tcpdump_subprocess(device):
 def run(args):
 
     hxl.debug_enabled = args.v
-    hxl.info_enabled =  not args.q
+    hxl.info_enabled = not args.q
+
+    if args.n:
+        global ext_ip_override
+        import urllib2
+        ext_ip_override =urllib2.urlopen("https://api.ipify.org/?format=text").read()
+        hxl.success("Behind NAT Config with IP: " + ext_ip_override)
 
     hxl.success("starting Connection tracking Thread")
     update_runner = Thread(target = update_conntrack)
@@ -176,5 +191,6 @@ if __name__ == "__main__":
     parser.add_argument("-s", help='start webserver', action='store_true')
     parser.add_argument("-v", help='enable debug logging', action='store_true')
     parser.add_argument("-q", help='quiet, suppress info messages', action='store_true', default=False)
+    parser.add_argument("-n", help='indicate you are behind a NAT', action='store_true', default=False)
     args = parser.parse_args()
     run(args)
