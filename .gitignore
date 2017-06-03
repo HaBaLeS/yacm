@@ -1,2 +1,7 @@
 .idea/
 *.pyc
+moc_*
+*.o
+ui_*.h
+Makefile
+.qmake.stash
