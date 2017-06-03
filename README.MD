@@ -6,9 +6,11 @@ pip install python-geoip
 
 pip install python-geoip-geolite2
 
+pip install IPy
+
 you need root for promiscious mode:
 
-sudo python ip_monitor.py -i <device>
+sudo python ip_monitor.py -i &lt;device&gt;
 
 if you are behind a NAT, you need to use -n so that the Private IP is replaced with the public IP of your ISP
 

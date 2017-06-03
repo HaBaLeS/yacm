@@ -82,12 +82,10 @@ def http_server_start():
                 self.wfile.write(resp)
                 return
 
-            if self.path == "/jquery":
-                self.send_file("jquery-3.2.1.min.js", 'application/javascript')
-                return
-
             if self.path == "/":
-                self.send_file("index.html",'text/html')
+                self.send_response(302)
+                self.send_header('Location', '/world')
+                self.end_headers();
                 return
 
             if self.path == "/world":
@@ -104,8 +102,8 @@ def http_server_start():
             self.send_response(200)
             self.send_header('Content-type', content_type)
             self.end_headers()
-            with open(file, 'r') as jquery:
-                for line in jquery:
+            with open(file, 'r') as fd:
+                for line in fd:
                     self.wfile.write(line)
             return
 
