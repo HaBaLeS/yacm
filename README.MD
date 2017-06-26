@@ -1,4 +1,4 @@
-This cybermonitor is very cyber.
+This cybermap is very cyber. It maps your cyber.
 
 The idea is to hook a device into an ethernet link as a bridge, and, through a connected display device, visualize the connections passing through on a map. The intermediate device itself does not need an IP address on the monitored network.
 
@@ -25,7 +25,7 @@ additionally (suggested) you can install matplotlib, python-mpltoolkits.basemap 
 ![basemap map client](basemap/screenshot.png)
 
 or get marble.kde.org and qt and compile the yacm-marble viewer in the "marble" subdirectory.
-if no lines show up, please use marble 16.12 or older, or any version after d1c9bb096f52, or apply this patch: https://phabricator.kde.org/D6072
+if no lines show up, please use marble 16.12 or older, or any version after d1c9bb096f52 (2017-06-26@21:00), or apply this patch: https://phabricator.kde.org/D6072
 
 ![marble map client](marble/screenshot.png)
 
